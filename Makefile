@@ -1,7 +1,7 @@
 CC = gcc
 
 TARGET = ntar
-SRC = ntar.c microtar.c
+SRC = ntar.c microtar.c os.c
 
 CFLAGS = -Os -Wl,-strip-all
 

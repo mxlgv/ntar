@@ -1,4 +1,4 @@
-/* Стандартные заголовки C99 */
+/* Standard headers C99 */
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -7,13 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Платформозависимые заголовки */
+/* Platform-specific header */
+#include "os.h"
 
-#include <sys/stat.h>
-
+/* Microtar library header */
 #include "microtar.h"
 
-#define BLOCK_LEN       (1024 * 4) // 100 KB - tar
+#define BLOCK_LEN       (1024 * 4) // 4 KB
 #define IFARG(str, dop) if (!strcmp(argv[1], (str)) && dop)
 
 typedef struct {
@@ -25,52 +25,6 @@ typedef enum {
     NTAR_LIST,
     NTAR_EXTRACT,
 } ntar_content_act_t;
-
-const char *UNABLE_OPEN_MSG = "Unable to open TAR '%s'. %s\n";
-
-size_t sys_get_fsize(const char *fname)
-{
-    struct stat finfo;
-    if (stat(fname, &finfo) == -1) {
-        return 0;
-    }
-    return finfo.st_size;
-}
-
-bool sys_is_dir(const char *name)
-{
-    struct stat info;
-    if (stat(name, &info) == -1) {
-        return false;
-    }
-    if (info.st_mode & S_IFDIR) {
-        return true;
-    }
-    return false;
-}
-
-bool sys_exist(const char *name)
-{
-    struct stat info;
-    if (!stat(name, &info)) {
-        return true;
-    }
-    return false;
-}
-
-bool sys_mkdir(const char *name)
-{
-    if (mkdir(name, 777) == -1) {
-        return false;
-    }
-    return true;
-}
-
-const char *sys_os_name(void)
-{
-    static const char *os = "Unix";
-    return os;
-}
 
 bool mkdir_parent(const char *full_path)
 {
@@ -93,8 +47,8 @@ bool mkdir_parent(const char *full_path)
     while (pch != NULL) {
         strcat(temp, "/");
         strcat(temp, pch);
-        if (!sys_exist(full_path)) {
-            if (sys_mkdir(temp)) {
+        if (!os_exist(full_path)) {
+            if (os_mkdir(temp)) {
                 status = false;
                 break;
             }
@@ -120,13 +74,14 @@ void ntar_list(mtar_header_t *header)
 
 void ntar_extract(mtar_header_t *header)
 {
-    if (header->type == MTAR_TDIR) {
+    /*    if (header->type == MTAR_TDIR) {
         if (mkdir_parent(header->name)) {
             printf("Folder created:     %s\n", header->name);
         } else {
             printf("Folder not created: %s\n", header->name);
         }
     }
+*/
 }
 
 int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_act_t act)
@@ -137,7 +92,7 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
 
     status = mtar_open(&tar, tar_fname, "rb");
     if (status) {
-        printf(UNABLE_OPEN_MSG, tar_fname, mtar_strerror(status));
+        printf("Unable to open TAR '%s'. %s\n", tar_fname, mtar_strerror(status));
         return status;
     }
 
@@ -188,14 +143,14 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
 
     int status = mtar_open(&tar, tar_fname, mode);
     if (status) {
-        printf(UNABLE_OPEN_MSG, tar_fname, mtar_strerror(status));
+        printf("Unable to open TAR '%s'. %s\n", tar_fname, mtar_strerror(status));
         return status;
     }
 
     for (size_t i = 0; i < flist.fnum; i++) {
         size_t size = 0;
 
-        if (sys_is_dir(flist.names[i])) {
+        if (os_is_dir(flist.names[i])) {
             tar_err_h = mtar_write_dir_header(&tar, flist.names[i]);
         } else {
             FILE *fd = fopen(flist.names[i], "rb");
@@ -204,7 +159,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
                 continue;
             }
 
-            size = sys_get_fsize(flist.names[i]);
+            size = os_get_fsize(flist.names[i]);
             tar_err_h = mtar_write_file_header(&tar, flist.names[i], size);
 
             while (!feof(fd)) {
@@ -234,7 +189,7 @@ void show_help(void)
 {
     printf(
         "\n"
-        " /\\_/\\    ntar (NEKO tar) - v0.1 \n"              
+        " /\\_/\\    ntar (NEKO tar) - v0.2 \n"
         "( o.o )   License: GPL-2.0-or-later\n"
         " > ^ <    Author — Maxim Logaev (2022 year)\n"
         "\n"
@@ -250,7 +205,7 @@ void show_help(void)
         "   -c                        Create tar file.\n"
         "   -a                        Add files to archive.\n"
         "   -l                        Show all files from archive.\n"
-        "   -x                        Extract files.\n\n");
+        "   -x                        Extract files (not implemented yet).\n\n");
 }
 
 /* clang-format off */
@@ -272,8 +227,9 @@ int main(int argc, char **argv)
     
     IFARG("-h", true) 
         show_help();
-    else IFARG("-x", argc > 3) 
-        status = ntar_work_content(tar_fname, flist_in, NTAR_EXTRACT);
+    else IFARG("-x", argc >= 3) 
+        //status = ntar_work_content(tar_fname, flist_in, NTAR_EXTRACT);
+        printf("Extract not implemented yet :(\n");
     else IFARG("-l", argc == 3)
         status = ntar_work_content(tar_fname, flist_in, NTAR_LIST);
     else IFARG("-c", argc > 3)
