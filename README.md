@@ -1,2 +1,2 @@
-# ktar
-ktar - tiny cross-platform tar implementation
+# ntar
+ntar - tiny cross-platform tar implementation

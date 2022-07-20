@@ -1,0 +1,7 @@
+BasedOnStyle: WebKit
+AlignTrailingComments: true
+AlignConsecutiveMacros: true
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: None
+SortIncludes: false
+PointerAlignment: Right
