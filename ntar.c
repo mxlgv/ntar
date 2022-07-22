@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libgen.h>
+
 /* Platform-specific header */
 #include "os.h"
 
@@ -63,7 +65,7 @@ bool mkdir_parent(const char *full_path)
     return status;
 }
 
-void ntar_list(mtar_header_t *header)
+void ntar_list(mtar_t *tar, mtar_header_t *header)
 {
     if (header->type == MTAR_TDIR) {
         printf("Folder: %s\n", header->name);
@@ -72,16 +74,49 @@ void ntar_list(mtar_header_t *header)
     }
 }
 
-void ntar_extract(mtar_header_t *header)
+bool write_to_file(char *fname, void *data, size_t size)
 {
-    /*    if (header->type == MTAR_TDIR) {
-        if (mkdir_parent(header->name)) {
-            printf("Folder created:     %s\n", header->name);
-        } else {
-            printf("Folder not created: %s\n", header->name);
-        }
+    FILE *fd = fopen(fname, "wb");
+    if (!fd) {
+        return false;
     }
-*/
+    int wc = fwrite(data, 1, size, fd);
+    if (wc != size) {
+        fclose(fd);
+        return false;
+    }
+    fclose(fd);
+    return true;
+}
+
+void ntar_extract(mtar_t *tar, mtar_header_t *header)
+{
+    if (header->type != MTAR_TDIR) {
+        char *dir = dirname(header->name);
+        if (!mkdir_parent(dir)) {
+            printf("Error creating folder '%s'!\n", header->name);
+            return;
+        }
+
+        void *data = malloc(header->size);
+        if (!data) {
+            puts("Memory allocation error!");
+            return;
+        }
+
+        int rd_st = mtar_read_data(tar, data, header->size);
+        if (!rd_st) {
+            printf("Error reading file '%s' from tar! %s", header->name, mtar_strerror(rd_st));
+            goto free;
+        }
+
+        if (!write_to_file(header->name, data, header->size)) {
+            printf("Error writing to file '%s'!\n", header->name);
+        }
+
+    free:
+        free(data);
+    }
 }
 
 int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_act_t act)
@@ -92,7 +127,7 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
 
     status = mtar_open(&tar, tar_fname, "rb");
     if (status) {
-        printf("Unable to open TAR '%s'. %s\n", tar_fname, mtar_strerror(status));
+        printf("Unable to open tar '%s'! %s\n", tar_fname, mtar_strerror(status));
         return status;
     }
 
@@ -100,14 +135,14 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
         for (size_t i = 0; i < flist.fnum; i++) {
             int status = mtar_find(&tar, flist.names[i], &tar_header);
             if (status != MTAR_ESUCCESS) {
-                printf("File extraction error '%s': %s\n", flist.names[i], mtar_strerror(status));
+                printf("File extraction error '%s'! %s\n", flist.names[i], mtar_strerror(status));
             }
-            ntar_extract(&tar_header);
+            ntar_extract(&tar, &tar_header);
         }
         goto close;
     }
 
-    void (*action_fn)(mtar_header_t * header);
+    void (*action_fn)(mtar_t * tar, mtar_header_t * header);
     if (act == NTAR_EXTRACT) {
         action_fn = ntar_extract;
     } else {
@@ -116,10 +151,10 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
 
     while (!(status = mtar_read_header(&tar, &tar_header))) {
         if (status != MTAR_ENULLRECORD && status) {
-            printf("Error: %s.\n", mtar_strerror(status));
+            printf("Error: %s!\n", mtar_strerror(status));
             break;
         }
-        (*action_fn)(&tar_header);
+        (*action_fn)(&tar, &tar_header);
         mtar_next(&tar);
     }
 
@@ -143,7 +178,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
 
     int status = mtar_open(&tar, tar_fname, mode);
     if (status) {
-        printf("Unable to open TAR '%s'. %s\n", tar_fname, mtar_strerror(status));
+        printf("Unable to open tar '%s'! %s\n", tar_fname, mtar_strerror(status));
         return status;
     }
 
@@ -176,7 +211,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
         }
 
         if (tar_err_h || tar_err_d) {
-            printf("Not added '%s'\n", flist.names[i]);
+            printf("Not added '%s'!\n", flist.names[i]);
         } else {
             printf("Added '%s' (%ld bytes)\n", flist.names[i], size);
         }
@@ -188,10 +223,10 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
 void show_help(void)
 {
     printf(
-        "\n"
-        " /\\_/\\    ntar (NEKO tar) - v0.2 \n"
-        "( o.o )   License: GPL-2.0-or-later\n"
-        " > ^ <    Author — Maxim Logaev (2022 year)\n"
+        "     _\n"
+        " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.2 \n"
+        "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
+        "|_||_\\__\\__,_|_|    Author — Maxim Logaev (2022 year)\n"
         "\n"
         "Usage: ntar [options] [tar-file] [files ...]\n"
         "Examples:\n"
