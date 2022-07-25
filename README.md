@@ -13,6 +13,7 @@ You will need [TCC](https://bellard.org/tcc/) and optional [GNU make](https://ww
 #### Without GNU make:
 `tcc ntar.c microtar.c os.c -o ntar`
 
+## TODO:
 
-
-
+- [ ] Porting to Windows OS
+- [ ] Porting to Kolibri OS
