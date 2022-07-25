@@ -1,7 +1,7 @@
 # nano tar
 It's a simple, small, cross-platform alternative to GNU tar. Using a modified version of the [microtar](https://github.com/rxi/microtar) library.
 
-![image](https://user-images.githubusercontent.com/51446645/180773452-6c01b892-3648-4022-bc6a-742933fc93b5.png)
+![image](https://user-images.githubusercontent.com/51446645/180776433-db69a5d4-8255-44bb-beee-1652678185cf.png)
 
 ## Build
 
