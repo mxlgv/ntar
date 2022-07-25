@@ -1,9 +1,7 @@
-CC = gcc
+CC = tcc
 
 TARGET = ntar
 SRC = ntar.c microtar.c os.c
-
-CFLAGS = -Os -Wl,-strip-all
 
 $(TARGET): $(SRC) Makefile
 	$(CC) $(CFLAGS) $(SRC) -o $@
