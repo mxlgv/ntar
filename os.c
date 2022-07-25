@@ -24,18 +24,13 @@ bool os_is_dir(const char *name)
     return false;
 }
 
-bool os_exist(const char *name)
+bool os_mkdir(const char *name)
 {
     struct stat info;
     if (!stat(name, &info)) {
         return true;
     }
-    return false;
-}
-
-bool os_mkdir(const char *name)
-{
-    if (mkdir(name, 777) == -1) {
+    if (mkdir(name, 0777) == -1) {
         return false;
     }
     return true;
