@@ -247,7 +247,7 @@ void show_help(void)
         "Usage: ntar [options] [tar-file] [files ...]\n"
         "Examples:\n"
         "   ntar -c test.tar foo bar  # Create archive.tar from files foo and bar"
-        "bar.\n"
+        "\n"
         "   ntar -l test.tar          # List all files in test.tar.\n"
         "   ntar -x test.tar          # Extract all files from test.tar.\n"
         "   ntar -x test.tar foo bar  # Extract foo and bar from test.tar.\n"
