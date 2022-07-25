@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <libgen.h>
-
 /* Platform-specific header */
 #include "os.h"
 
@@ -242,7 +240,7 @@ void show_help(void)
         "     _\n"
         " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.9 \n"
         "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
-        "|_||_\\__\\__,_|_|    Author — Maxim Logaev (2022 year)\n"
+        "|_||_\\__\\__,_|_|    Author - Maxim Logaev (2022 year)\n"
         "\n"
         "Usage: ntar [options] [tar-file] [files ...]\n"
         "Examples:\n"
