@@ -1,6 +1,7 @@
 #include "os.h"
 
-#if defined _unix || __unix || __unix__ || __CYGWIN__
+#if defined(OS_WINDOWS) || defined(OS_UNIX)
+
 #include <sys/stat.h>
 
 size_t os_get_fsize(const char *fname)
@@ -30,12 +31,28 @@ bool os_mkdir(const char *name)
     if (!stat(name, &info)) {
         return true;
     }
+#ifdef OS_WINDOWS
+    if (mkdir(name) == -1) {
+#else
     if (mkdir(name, 0777) == -1) {
+#endif
         return false;
     }
     return true;
 }
 
-#else
-#error "The platform is not supported. Implement functions for your platform in os.c"
+#endif
+
+#ifdef OS_WINDOWS
+char *dirname(char *s) /* Adaptation from musl libc for windows  */
+{
+    size_t i;
+    if (!s || !*s) return ".";
+    i = strlen(s)-1;
+    for (; s[i]=='\\'; i--) if (!i) return "\\";
+    for (; s[i]!='\\'; i--) if (!i) return ".";
+    for (; s[i]=='\\'; i--) if (!i) return "\\";
+    s[i+1] = 0;
+    return s;
+}
 #endif
