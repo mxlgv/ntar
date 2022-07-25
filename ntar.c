@@ -28,40 +28,46 @@ typedef enum {
     NTAR_EXTRACT,
 } ntar_content_act_t;
 
+const char* NO_MEM_MSG = "Not enough memory";
+const char* UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
+const char* UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
+
+const char* FMODE_RB = "rb";
+const char* FMODE_WB = "wb";
+const char* FMODE_AB = "ab";
+
 bool mkdir_parent(const char *full_path)
 {
+    const char* SEP = "\\/";
     bool status = true;
 
-    char *temp = malloc(strlen(full_path) + 3);
-    char *new = strdup(full_path);
+    char *tmp_str = calloc(OS_PATH_MAX, sizeof(char));
+    char *full_path_dup = strdup(full_path);
 
-    if (!new || !temp) {
+    if (!full_path_dup || !tmp_str) {
         return false;
     }
-
+#if 0
     if (full_path[0] == '/' || full_path[0] == '\\') {
-        temp[0] = '\0';
+        tmp_str[0] = '\0';
     } else {
-        strcpy(temp, ".");
+        strcpy(tmp_str, ".");
     }
-
-    char *pch = strtok(new, "\\/");
+#endif
+    char *pch = strtok(full_path_dup, SEP);
     while (pch != NULL) {
-        strcat(temp, "/");
-        strcat(temp, pch);
-        if (!os_exist(full_path)) {
-            if (os_mkdir(temp)) {
-                status = false;
-                break;
-            }
-            status = true;
+        strcat(tmp_str, "/");
+        strcat(tmp_str, pch);
+        puts(tmp_str);
+        if (!os_mkdir(tmp_str)) {
+            status = false;
             break;
-
-            pch = strtok(NULL, "\\/");
         }
+        pch = strtok(NULL, SEP);
     }
-    free(temp);
-    free(new);
+
+    free(tmp_str);
+    free(full_path_dup);
     return status;
 }
 
@@ -74,49 +80,58 @@ void ntar_list(mtar_t *tar, mtar_header_t *header)
     }
 }
 
-bool write_to_file(char *fname, void *data, size_t size)
-{
-    FILE *fd = fopen(fname, "wb");
-    if (!fd) {
-        return false;
-    }
-    int wc = fwrite(data, 1, size, fd);
-    if (wc != size) {
-        fclose(fd);
-        return false;
-    }
-    fclose(fd);
-    return true;
-}
-
 void ntar_extract(mtar_t *tar, mtar_header_t *header)
 {
-    if (header->type != MTAR_TDIR) {
-        char *dir = dirname(header->name);
-        if (!mkdir_parent(dir)) {
-            printf("Error creating folder '%s'!\n", header->name);
-            return;
+    char *full_name = strdup(header->name);
+    char *dir_name = header->name;
+    if (header->type == MTAR_TREG) {
+        dir_name = dirname(full_name);
+    }
+
+    if (!os_mkdir(dir_name)) {
+        printf("Error creating folder '%s'!\n", header->name);
+        goto exit;
+    }
+
+    if (header->type == MTAR_TREG) {
+        FILE *fd = fopen(header->name, "wb");
+        if (!fd) {
+            printf(UNABLE_TO_OPEN_MSG, header->name);
+            goto exit;
         }
 
-        void *data = malloc(header->size);
+        size_t new_size = 0;
+        size_t readed = 0;
+
+        void *data = malloc(BLOCK_LEN);
         if (!data) {
-            puts("Memory allocation error!");
-            return;
+            puts(NO_MEM_MSG);
+            goto exit;
         }
 
-        int rd_st = mtar_read_data(tar, data, header->size);
-        if (!rd_st) {
-            printf("Error reading file '%s' from tar! %s", header->name, mtar_strerror(rd_st));
-            goto free;
-        }
+        while (readed < header->size) {
+            new_size = header->size - readed;
+            if (new_size >= BLOCK_LEN) {
+                new_size = BLOCK_LEN;
+            }
 
-        if (!write_to_file(header->name, data, header->size)) {
-            printf("Error writing to file '%s'!\n", header->name);
+            int rd_st = mtar_read_data(tar, data, new_size);
+            if (rd_st) {
+                printf("Error reading file '%s' from tar! %s", header->name, mtar_strerror(rd_st));
+                break;
+            }
+            if (fwrite(data, new_size, 1, fd) != 1) {
+                printf("Error writing to file '%s'!\n", header->name);
+                break;
+            }
+            readed += new_size;
         }
-
-    free:
         free(data);
     }
+
+    printf("Extracted %s\n", header->name);
+exit:
+    free(full_name);
 }
 
 int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_act_t act)
@@ -125,17 +140,18 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
     mtar_header_t tar_header;
     int status = MTAR_ESUCCESS;
 
-    status = mtar_open(&tar, tar_fname, "rb");
+    status = mtar_open(&tar, tar_fname, FMODE_RB);
     if (status) {
-        printf("Unable to open tar '%s'! %s\n", tar_fname, mtar_strerror(status));
+        printf(UNABLE_TO_OPEN_TAR_MSG, tar_fname, mtar_strerror(status));
         return status;
     }
 
     if (flist.fnum > 0) {
         for (size_t i = 0; i < flist.fnum; i++) {
-            int status = mtar_find(&tar, flist.names[i], &tar_header);
+            status = mtar_find(&tar, flist.names[i], &tar_header);
             if (status != MTAR_ESUCCESS) {
-                printf("File extraction error '%s'! %s\n", flist.names[i], mtar_strerror(status));
+                printf("Error extracting file '%s'! %s\n", flist.names[i], mtar_strerror(status));
+                goto close;
             }
             ntar_extract(&tar, &tar_header);
         }
@@ -170,15 +186,15 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
     int tar_err_h = 0;
     int tar_err_d = 0;
 
-    const char *mode = "wb";
+    const char *mode = FMODE_WB;
 
     if (!new_tar) {
-        mode = "ab";
+        mode = FMODE_AB;
     }
 
     int status = mtar_open(&tar, tar_fname, mode);
     if (status) {
-        printf("Unable to open tar '%s'! %s\n", tar_fname, mtar_strerror(status));
+        printf(UNABLE_TO_OPEN_TAR_MSG, tar_fname, mtar_strerror(status));
         return status;
     }
 
@@ -188,9 +204,9 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
         if (os_is_dir(flist.names[i])) {
             tar_err_h = mtar_write_dir_header(&tar, flist.names[i]);
         } else {
-            FILE *fd = fopen(flist.names[i], "rb");
+            FILE *fd = fopen(flist.names[i], FMODE_RB);
             if (!fd) {
-                printf("Error: Unable to open file '%s!'\n", flist.names[i]);
+                printf(UNABLE_TO_OPEN_MSG, flist.names[i]);
                 continue;
             }
 
@@ -200,7 +216,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
             while (!feof(fd)) {
                 void *file_data = malloc(BLOCK_LEN);
                 if (!file_data) {
-                    puts("Memory allocation error!");
+                    puts(NO_MEM_MSG);
                     break;
                 }
                 size_t rsize = fread(file_data, 1, BLOCK_LEN, fd);
@@ -224,7 +240,7 @@ void show_help(void)
 {
     printf(
         "     _\n"
-        " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.2 \n"
+        " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.9 \n"
         "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
         "|_||_\\__\\__,_|_|    Author — Maxim Logaev (2022 year)\n"
         "\n"
@@ -240,7 +256,7 @@ void show_help(void)
         "   -c                        Create tar file.\n"
         "   -a                        Add files to archive.\n"
         "   -l                        Show all files from archive.\n"
-        "   -x                        Extract files (not implemented yet).\n\n");
+        "   -x                        Extract files.\n\n");
 }
 
 /* clang-format off */
@@ -263,8 +279,7 @@ int main(int argc, char **argv)
     IFARG("-h", true) 
         show_help();
     else IFARG("-x", argc >= 3) 
-        //status = ntar_work_content(tar_fname, flist_in, NTAR_EXTRACT);
-        printf("Extract not implemented yet :(\n");
+        status = ntar_work_content(tar_fname, flist_in, NTAR_EXTRACT);
     else IFARG("-l", argc == 3)
         status = ntar_work_content(tar_fname, flist_in, NTAR_LIST);
     else IFARG("-c", argc > 3)
