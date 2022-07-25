@@ -12,6 +12,12 @@
 #error "The platform is not supported. Implement functions for your platform in os.c"
 #endif
 
+#ifndef OS_WINDOWS
+#include <libgen.h>
+#else
+extern char *dirname(char *path);
+#endif
+
 #define OS_PATH_MAX 4096
 
 size_t os_get_fsize(const char *fname);
