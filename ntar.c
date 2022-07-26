@@ -26,17 +26,17 @@ typedef enum {
     NTAR_EXTRACT,
 } ntar_content_act_t;
 
-const char* NO_MEM_MSG = "Not enough memory";
-const char* UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
-const char* UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
+const char *NO_MEM_MSG = "Not enough memory";
+const char *UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
+const char *UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
 
-const char* FMODE_RB = "rb";
-const char* FMODE_WB = "wb";
-const char* FMODE_AB = "ab";
+const char *FMODE_RB = "rb";
+const char *FMODE_WB = "wb";
+const char *FMODE_AB = "ab";
 
 bool mkdir_parent(const char *full_path)
 {
-    const char* SEP = "\\/";
+    const char *SEP = "\\/";
     bool status = true;
 
     char *tmp_str = calloc(OS_PATH_MAX, sizeof(char));
