@@ -15,5 +15,5 @@ You will need [TCC](https://bellard.org/tcc/) and optional [GNU make](https://ww
 
 ## TODO:
 
-- [ ] Porting to Windows OS
+- [x] Porting to Windows OS
 - [ ] Porting to Kolibri OS
