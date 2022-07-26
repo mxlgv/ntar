@@ -43,6 +43,8 @@ bool os_mkdir(const char *name)
 
 #endif
 
+/* clang-format off */
+
 #ifdef OS_WINDOWS
 char *dirname(char *s) /* Adaptation from musl libc for windows  */
 {
@@ -56,3 +58,5 @@ char *dirname(char *s) /* Adaptation from musl libc for windows  */
     return s;
 }
 #endif
+
+/* clang-format on */
