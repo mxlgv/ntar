@@ -41,6 +41,38 @@ bool os_mkdir(const char *name)
     return true;
 }
 
+#elif defined(OS_KOLIBRI)
+
+#include <sys/ksys.h>
+
+#define IS_DIR 0x10
+
+size_t os_get_fsize(const char *fname)
+{
+    ksys_bdfe_t finfo;
+    if (_ksys_file_info(fname, &finfo)) {
+        return 0;
+    }
+    return finfo.size;
+}
+
+bool os_is_dir(const char *name)
+{
+    ksys_bdfe_t info;
+    if (_ksys_file_info(name, &info)) {
+        return false;
+    }
+    if (info.attributes & IS_DIR) {
+        return true;
+    }
+    return false;
+}
+
+bool os_mkdir(const char *name)
+{
+    return !_ksys_mkdir(name);
+}
+
 #endif
 
 /* clang-format off */
