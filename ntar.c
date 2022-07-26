@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <libgen.h>
-
 /* Platform-specific header */
 #include "os.h"
 
@@ -28,17 +26,17 @@ typedef enum {
     NTAR_EXTRACT,
 } ntar_content_act_t;
 
-const char* NO_MEM_MSG = "Not enough memory";
-const char* UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
-const char* UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
+const char *NO_MEM_MSG = "Not enough memory";
+const char *UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
+const char *UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
 
-const char* FMODE_RB = "rb";
-const char* FMODE_WB = "wb";
-const char* FMODE_AB = "ab";
+const char *FMODE_RB = "rb";
+const char *FMODE_WB = "wb";
+const char *FMODE_AB = "ab";
 
 bool mkdir_parent(const char *full_path)
 {
-    const char* SEP = "\\/";
+    const char *SEP = "\\/";
     bool status = true;
 
     char *tmp_str = calloc(OS_PATH_MAX, sizeof(char));
@@ -242,7 +240,7 @@ void show_help(void)
         "     _\n"
         " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.9 \n"
         "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
-        "|_||_\\__\\__,_|_|    Author — Maxim Logaev (2022 year)\n"
+        "|_||_\\__\\__,_|_|    Author - Maxim Logaev (2022 year)\n"
         "\n"
         "Usage: ntar [options] [tar-file] [files ...]\n"
         "Examples:\n"
