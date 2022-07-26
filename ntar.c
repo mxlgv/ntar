@@ -259,13 +259,14 @@ void show_help(void)
 
 /* clang-format off */
 
-
 int main(int argc, char **argv)
 {
+    OS_CON_SET_TITLE("ntar");
+
     int status = MTAR_ESUCCESS;
     if (argc < 3) {
         show_help();
-        return status;
+        goto exit;
     }
 
     char *tar_fname = argv[2];
@@ -286,7 +287,10 @@ int main(int argc, char **argv)
         status = ntar_add_files(tar_fname, false, flist_in);
     else
         puts("Use '-h' for help.");
-    return EXIT_SUCCESS;
+
+exit:
+    OS_CON_EXIT(0);
+    return status;
 }
 
 /* clang-format on */
