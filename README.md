@@ -17,3 +17,6 @@ You will need [TCC](https://bellard.org/tcc/) and optional [GNU make](https://ww
 - [ ] Recursively adding folders and files;
 - [ ] Port for FreeDOS/MSDOS;
 - [ ] Autocall KPACK for Kolibri OS.
+
+## Warning
+The program has not yet been properly tested, so there may be bugs that can damage files. I highly recommend not using it for archiving valuable data yet
