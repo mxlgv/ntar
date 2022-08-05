@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define VER "1.0"
+
 /* Platform-specific header */
 #include "os.h"
 
@@ -238,7 +240,7 @@ void show_help(void)
 {
     printf(
         "     _\n"
-        " _ _| |_ __ _ _ _   ntar (NANO tar) - v0.9 \n"
+        " _ _| |_ __ _ _ _   ntar (NANO tar) - v"VER"\n"
         "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
         "|_||_\\__\\__,_|_|    Author - Maxim Logaev (2022 year)\n"
         "\n"
