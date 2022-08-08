@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <inttypes.h>
 
 #include "microtar.h"
 
