@@ -8,17 +8,15 @@
 #define OS_UNIX
 #elif defined(_WIN32) || defined(WIN32) || defined(WIN64) || defined(_WIN64) || defined(__MINGW32__) || defined(__MINGW64__)
 #define OS_WINDOWS
+#elif defined(_DOS) || defined(DOS)
+#define OS_DOS
 #elif defined(_KOLIBRI) || defined(KOLIBRI)
 #define OS_KOLIBRI
 #else
 #error "The platform is not supported. Implement functions for your platform in os.c"
 #endif
 
-#ifndef OS_WINDOWS
-#include <libgen.h>
-#else
-extern char *dirname(char *path);
-#endif
+char *dirname(char *path);
 
 #ifdef OS_KOLIBRI
 #include <conio.h>
