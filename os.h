@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 #if defined(_unix) || defined(__unix) || defined(__unix__) || defined(__CYGWIN__)
 #define OS_UNIX
@@ -20,7 +21,9 @@ char *dirname(char *path);
 
 #ifdef OS_KOLIBRI
 #include <conio.h>
-#define OS_CON_SET_TITLE(title) con_init(); (*con_set_title)(title)
+#define OS_CON_SET_TITLE(title) \
+    con_init();                 \
+    (*con_set_title)(title)
 #define OS_CON_EXIT(status) (*con_exit)(status)
 #else
 #define OS_CON_SET_TITLE(title)
