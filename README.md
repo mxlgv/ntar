@@ -4,14 +4,14 @@ It's a simple, small, cross-platform alternative to GNU tar. Using a modified ve
 ![image](https://user-images.githubusercontent.com/51446645/183033042-2d56fbda-140a-42d4-8e62-2776e10d0f43.png)
 
 ## Build
+To build under Windows, Unix or KolibriOS you will need [TCC](https://bellard.org/tcc/).
+To build under DOS, I used [OpenWatcom](https://github.com/open-watcom/open-watcom-v2)
 
-You will need [TCC](https://bellard.org/tcc/) and optional [GNU make](https://www.gnu.org/software/make/).
-
-#### With GNU make:
-`make`
-
-#### Without GNU make:
+#### For Unix, Windows, KolibriOS
 `tcc ntar.c microtar.c os.c -o ntar`
+
+#### For DOS
+`owcc -s -Os -std=c99 -bdos -mcmodel=s ntar.c os.c microtar.c -o ntar.exe`
 
 ## TODO:
 - [ ] Recursively adding folders and files;
