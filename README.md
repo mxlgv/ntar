@@ -14,10 +14,14 @@ To build under DOS, I used [OpenWatcom](https://github.com/open-watcom/open-watc
 `owcc -s -Os -std=c99 -bdos -mcmodel=s ntar.c os.c microtar.c -o ntar.exe`
 
 ## TODO:
+- [x] Listing Files
+- [x] File Extraction;
+- [x] Adding files;
 - [ ] Recursively adding folders and files;
-- [ ] Port for FreeDOS/MSDOS;
-- [ ] Autocall KPACK for Kolibri OS;
 - [ ] Add saving of all file attributes of supported.
+- [x] Porting to Windows OS;
+- [x] Porting to Kolibri OS;
+- [x] Porting to FreeDOS/MSDOS.
 
 ## Warning
 The program has not yet been properly tested, so there may be bugs that can damage files. I highly recommend not using it for archiving valuable data yet
