@@ -76,7 +76,7 @@ void ntar_list(mtar_t *tar, mtar_header_t *header)
     if (header->type == MTAR_TDIR) {
         printf("Folder: %s\n", header->name);
     } else {
-        printf("File:   %s (%d bytes)\n", header->name, header->size);
+        printf("File:   %s (%zu bytes)\n", header->name, header->size);
     }
 }
 
@@ -229,7 +229,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
         if (tar_err_h || tar_err_d) {
             printf("Not added '%s'!\n", flist.names[i]);
         } else {
-            printf("Added '%s' (%ld bytes)\n", flist.names[i], size);
+            printf("Added '%s' (%zu bytes)\n", flist.names[i], size);
         }
     }
     mtar_close(&tar);
@@ -240,7 +240,7 @@ void show_help(void)
 {
     printf(
         "     _\n"
-        " _ _| |_ __ _ _ _   ntar (NANO tar) - v"VER"\n"
+        " _ _| |_ __ _ _ _   ntar (NANO tar) - v" VER "\n"
         "| ' \\  _/ _` | '_|  License: GPL-2.0-or-later\n"
         "|_||_\\__\\__,_|_|    Author - Maxim Logaev (2022 year)\n"
         "\n"

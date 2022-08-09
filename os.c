@@ -1,6 +1,6 @@
 #include "os.h"
 
-#if defined(OS_WINDOWS) || defined(OS_UNIX)
+#if defined(OS_WINDOWS) || defined(OS_UNIX) || defined(OS_DOS)
 
 #include <sys/stat.h>
 
@@ -31,7 +31,7 @@ bool os_mkdir(const char *name)
     if (!stat(name, &info)) {
         return true;
     }
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) || defined(OS_DOS)
     if (mkdir(name) == -1) {
 #else
     if (mkdir(name, 0777) == -1) {
