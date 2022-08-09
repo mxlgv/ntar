@@ -14,11 +14,11 @@ To build under DOS, I used [OpenWatcom](https://github.com/open-watcom/open-watc
 `owcc -s -Os -std=c99 -bdos -mcmodel=s ntar.c os.c microtar.c -o ntar.exe`
 
 ## TODO:
-- [x] Listing Files
-- [x] File Extraction;
+- [x] Listing files;
+- [x] Extraction files;
 - [x] Adding files;
 - [ ] Recursively adding folders and files;
-- [ ] Add saving of all file attributes of supported.
+- [ ] Add saving of all file attributes of supported;
 - [x] Porting to Windows OS;
 - [x] Porting to Kolibri OS;
 - [x] Porting to FreeDOS/MSDOS.
