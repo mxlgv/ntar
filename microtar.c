@@ -28,6 +28,11 @@
 
 #include "microtar.h"
 
+const char *MTAR_FMODE_W = "wb";
+const char *MTAR_FMODE_R = "rb";
+const char *MTAR_FMODE_W_PLUS = "w+b";
+const char *MTAR_FMODE_A_PLUS = "a+b";
+
 typedef struct {
     char name[MTAR_FNAME_MAX];
     char mode[8];
@@ -201,13 +206,6 @@ int mtar_open(mtar_t *tar, const char *filename, const char *mode)
     tar->seek = file_seek;
     tar->close = file_close;
 
-    /* Assure mode is always binary */
-    if (strchr(mode, 'r'))
-        mode = "rb";
-    if (strchr(mode, 'w'))
-        mode = "wb";
-    if (strchr(mode, 'a'))
-        mode = "ab";
     /* Open file */
     tar->stream = fopen(filename, mode);
     if (!tar->stream) {

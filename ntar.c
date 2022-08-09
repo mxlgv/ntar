@@ -32,10 +32,6 @@ const char *NO_MEM_MSG = "Not enough memory";
 const char *UNABLE_TO_OPEN_TAR_MSG = "Unable to open tar '%s'! %s\n";
 const char *UNABLE_TO_OPEN_MSG = "Unable to open file '%s!'\n";
 
-const char *FMODE_RB = "rb";
-const char *FMODE_WB = "wb";
-const char *FMODE_AB = "ab";
-
 bool mkdir_parent(const char *full_path)
 {
     const char *SEP = "\\/";
@@ -94,7 +90,7 @@ void ntar_extract(mtar_t *tar, mtar_header_t *header)
     }
 
     if (header->type == MTAR_TREG) {
-        FILE *fd = fopen(header->name, "wb");
+        FILE *fd = fopen(header->name, MTAR_FMODE_W);
         if (!fd) {
             printf(UNABLE_TO_OPEN_MSG, header->name);
             goto exit;
@@ -140,7 +136,7 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
     mtar_header_t tar_header;
     int status = MTAR_ESUCCESS;
 
-    status = mtar_open(&tar, tar_fname, FMODE_RB);
+    status = mtar_open(&tar, tar_fname, MTAR_FMODE_R);
     if (status) {
         printf(UNABLE_TO_OPEN_TAR_MSG, tar_fname, mtar_strerror(status));
         return status;
@@ -186,10 +182,10 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
     int tar_err_h = 0;
     int tar_err_d = 0;
 
-    const char *mode = FMODE_WB;
+    const char *mode = MTAR_FMODE_W_PLUS;
 
     if (!new_tar) {
-        mode = FMODE_AB;
+        mode = MTAR_FMODE_A_PLUS;
     }
 
     int status = mtar_open(&tar, tar_fname, mode);
@@ -201,10 +197,15 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
     for (size_t i = 0; i < flist.fnum; i++) {
         size_t size = 0;
 
+        if (mtar_find(&tar, flist.names[i], &tar_header) == MTAR_ESUCCESS) {
+            printf("'%s' already added. Pass!\n", flist.names[i]);
+            continue;
+        }
+
         if (os_is_dir(flist.names[i])) {
             tar_err_h = mtar_write_dir_header(&tar, flist.names[i]);
         } else {
-            FILE *fd = fopen(flist.names[i], FMODE_RB);
+            FILE *fd = fopen(flist.names[i], MTAR_FMODE_R);
             if (!fd) {
                 printf(UNABLE_TO_OPEN_MSG, flist.names[i]);
                 continue;
@@ -229,7 +230,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
         if (tar_err_h || tar_err_d) {
             printf("Not added '%s'!\n", flist.names[i]);
         } else {
-            printf("Added '%s' (%zu bytes)\n", flist.names[i], size);
+            printf("Added '%s'\n", flist.names[i]);
         }
     }
     mtar_close(&tar);

@@ -76,6 +76,11 @@ struct mtar_t {
     size_t last_header;
 };
 
+extern const char *MTAR_FMODE_W;
+extern const char *MTAR_FMODE_R;
+extern const char *MTAR_FMODE_W_PLUS;
+extern const char *MTAR_FMODE_A_PLUS;
+
 const char *mtar_strerror(int err);
 
 int mtar_open(mtar_t *tar, const char *filename, const char *mode);
