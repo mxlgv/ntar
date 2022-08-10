@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <time.h>
 
 #if defined(_unix) || defined(__unix) || defined(__unix__) || defined(__CYGWIN__)
 #define OS_UNIX
@@ -11,13 +12,11 @@
 #define OS_WINDOWS
 #elif defined(_DOS) || defined(DOS)
 #define OS_DOS
-#elif defined(_KOLIBRI) || defined(KOLIBRI)
+#elif defined(_KOLIBRI) || defined(KOLIBRI) || defined(KOS) || defined(_KOS)
 #define OS_KOLIBRI
 #else
 #error "The platform is not supported. Implement functions for your platform in os.c"
 #endif
-
-char *dirname(char *path);
 
 #ifdef OS_KOLIBRI
 #include <conio.h>
@@ -32,9 +31,19 @@ char *dirname(char *path);
 
 #define OS_PATH_MAX 4096
 
-size_t os_get_fsize(const char *fname);
-bool os_is_dir(const char *name);
-bool os_exist(const char *name);
-bool os_mkdir(const char *name);
+typedef struct {
+    bool is_dir;
+    size_t size;
+    time_t mtime;
+} os_stat_t;
+
+#if defined(OS_WINDOWS) || defined(OS_DOS)
+char *dirname(char *path);
+#else
+#include <libgen.h>
+#endif
+
+bool os_stat(const char *path, os_stat_t *info);
+bool os_mkdir(const char *path);
 
 #endif

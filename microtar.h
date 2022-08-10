@@ -18,7 +18,6 @@ extern "C" {
 #include <stdint.h>
 #include <limits.h>
 
-#define MTAR_VERSION   "0.1.1"
 #define MTAR_FNAME_MAX 100
 
 #if !defined(UINT_MAX) || !defined(UINT16_MAX)

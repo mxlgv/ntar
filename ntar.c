@@ -206,7 +206,10 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
             continue;
         }
 
-        if (os_is_dir(flist.names[i])) {
+        os_stat_t info;
+        os_stat(flist.names[i], &info);
+
+        if (info.is_dir) {
             tar_err_h = mtar_write_dir_header(&tar, flist.names[i]);
         } else {
             FILE *fd = fopen(flist.names[i], MTAR_OPEN_R);
@@ -215,9 +218,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
                 continue;
             }
 
-            size_t size = os_get_fsize(flist.names[i]);
-
-            tar_err_h = mtar_write_file_header(&tar, flist.names[i], size);
+            tar_err_h = mtar_write_file_header(&tar, flist.names[i], info.size);
             while (!feof(fd)) {
                 void *file_data = malloc(BLOCK_LEN);
                 if (!file_data) {

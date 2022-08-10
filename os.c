@@ -1,71 +1,78 @@
 #include "os.h"
 
-#if defined(OS_WINDOWS) || defined(OS_UNIX) || defined(OS_DOS)
-
+#ifndef OS_KOLIBRI
 #include <sys/stat.h>
 
-size_t os_get_fsize(const char *fname)
+bool os_stat(const char *path, os_stat_t *info)
 {
-    struct stat finfo;
-    if (stat(fname, &finfo) == -1) {
-        return 0;
-    }
-    return finfo.st_size;
-}
+    struct stat _info;
+    info->is_dir = true;
 
-bool os_is_dir(const char *name)
-{
-    struct stat info;
-    if (stat(name, &info) == -1) {
+    if (stat(path, &_info) == -1) {
         return false;
     }
-    if (info.st_mode & S_IFDIR) {
-        return true;
-    }
-    return false;
+
+    info->is_dir = _info.st_mode & S_IFDIR;
+    info->size = _info.st_size;
+    info->mtime = _info.st_mtime;
+    return true;
 }
 
-bool os_mkdir(const char *name)
+bool os_mkdir(const char *path)
 {
-    struct stat info;
-    if (!stat(name, &info)) {
+    os_stat_t info;
+    if (os_stat(path, &info)) {
         return true;
     }
 #if defined(OS_WINDOWS) || defined(OS_DOS)
-    if (mkdir(name) == -1) {
+    if (mkdir(path) == -1) {
 #else
-    if (mkdir(name, 0777) == -1) {
+    if (mkdir(path, 0777) == -1) {
 #endif
         return false;
     }
     return true;
 }
 
-#elif defined(OS_KOLIBRI)
-
+#else
 #include <sys/ksys.h>
+#define KSYS_IS_DIR 0x10
 
-#define IS_DIR 0x10
+/* !FIXME! Overriding the structure from ksys.h. */
+typedef struct {
+    uint32_t attr;
+    uint32_t name_enc;
+    ksys_time_t ctime;
+    ksys_date_t cdate;
+    ksys_time_t atime;
+    ksys_date_t adate;
+    ksys_time_t mtime;
+    ksys_date_t mdate;
+    uint64_t size;
+    char name[0];
+} ksys_bdfe_t;
 
-size_t os_get_fsize(const char *fname)
+bool os_stat(const char *path, os_stat_t *info)
 {
-    ksys_bdfe_t finfo;
-    if (_ksys_file_info(fname, &finfo)) {
-        return 0;
-    }
-    return finfo.size;
-}
-
-bool os_is_dir(const char *name)
-{
-    ksys_bdfe_t info;
-    if (_ksys_file_info(name, &info)) {
+    ksys_bdfe_t bdfe;
+    if (_ksys_file_info(path, &bdfe)) {
         return false;
     }
-    if (info.attributes & IS_DIR) {
-        return true;
-    }
-    return false;
+
+    struct tm t;
+    t.tm_hour = bdfe.mtime.hour;
+    t.tm_min = bdfe.mtime.min;
+    t.tm_sec = bdfe.mtime.sec;
+
+    t.tm_year = bdfe.mdate.year;
+    t.tm_mon = bdfe.mdate.month;
+    t.tm_mday = bdfe.mdate.day;
+
+    info->is_dir = bdfe.attr & KSYS_IS_DIR;
+    info->size = bdfe.size;
+    info->mtime = mktime(&t);
+
+    return true;
 }
 
 bool os_mkdir(const char *name)
