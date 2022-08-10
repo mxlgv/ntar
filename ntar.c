@@ -1,11 +1,11 @@
 /* Standard headers C99 */
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define VER "1.0"
 
@@ -54,7 +54,6 @@ bool mkdir_parent(const char *full_path)
     while (pch != NULL) {
         strcat(tmp_str, "/");
         strcat(tmp_str, pch);
-        puts(tmp_str);
         if (!os_mkdir(tmp_str)) {
             status = false;
             break;
@@ -67,16 +66,23 @@ bool mkdir_parent(const char *full_path)
     return status;
 }
 
-void ntar_list(mtar_t *tar, mtar_header_t *header)
+static void ntar_list(mtar_t *tar, mtar_header_t *header)
 {
+    char marker = 'F';
     if (header->type == MTAR_TDIR) {
-        printf("Folder: %s\n", header->name);
-    } else {
-        printf("File:   %s (%zu bytes)\n", header->name, header->size);
+        marker = 'D';
     }
+
+    time_t mtime_raw = header->mtime;
+    struct tm *lt = localtime(&mtime_raw);
+
+    printf("%c  %15zu  %02d.%02d.%d %02d:%02d:%02d  %s\n",
+           marker, header->size,
+           lt->tm_mday, lt->tm_mon + 1, lt->tm_year + 1900,
+           lt->tm_hour, lt->tm_min, lt->tm_sec, header->name);
 }
 
-void ntar_extract(mtar_t *tar, mtar_header_t *header)
+static void ntar_extract(mtar_t *tar, mtar_header_t *header)
 {
     char *full_name = strdup(header->name);
     char *dir_name = header->name;
@@ -85,12 +91,12 @@ void ntar_extract(mtar_t *tar, mtar_header_t *header)
     }
 
     if (!os_mkdir(dir_name)) {
-        printf("Error creating folder '%s'!\n", header->name);
+        printf("Error creating directory '%s'!\n", header->name);
         goto exit;
     }
 
     if (header->type == MTAR_TREG) {
-        FILE *fd = fopen(header->name, MTAR_FMODE_W);
+        FILE *fd = fopen(header->name, MTAR_OPEN_W);
         if (!fd) {
             printf(UNABLE_TO_OPEN_MSG, header->name);
             goto exit;
@@ -136,7 +142,7 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
     mtar_header_t tar_header;
     int status = MTAR_ESUCCESS;
 
-    status = mtar_open(&tar, tar_fname, MTAR_FMODE_R);
+    status = mtar_open(&tar, tar_fname, MTAR_OPEN_R);
     if (status) {
         printf(UNABLE_TO_OPEN_TAR_MSG, tar_fname, mtar_strerror(status));
         return status;
@@ -161,13 +167,13 @@ int ntar_work_content(const char *tar_fname, ntar_flist_t flist, ntar_content_ac
         action_fn = ntar_list;
     }
 
-    while (!(status = mtar_read_header(&tar, &tar_header))) {
-        if (status != MTAR_ENULLRECORD && status) {
-            printf("Error: %s!\n", mtar_strerror(status));
-            break;
-        }
-        (*action_fn)(&tar, &tar_header);
+    while ((status = mtar_read_header(&tar, &tar_header)) == MTAR_ESUCCESS) {
+        action_fn(&tar, &tar_header);
         mtar_next(&tar);
+    }
+
+    if (status != MTAR_ESUCCESS && status != MTAR_ENULLRECORD) {
+        printf("Error: %s!\n", mtar_strerror(status));
     }
 
 close:
@@ -182,10 +188,10 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
     int tar_err_h = 0;
     int tar_err_d = 0;
 
-    const char *mode = MTAR_FMODE_W_PLUS;
+    const char *mode = MTAR_OPEN_W_PLUS;
 
     if (!new_tar) {
-        mode = MTAR_FMODE_A_PLUS;
+        mode = MTAR_OPEN_A_PLUS;
     }
 
     int status = mtar_open(&tar, tar_fname, mode);
@@ -195,25 +201,23 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
     }
 
     for (size_t i = 0; i < flist.fnum; i++) {
-        size_t size = 0;
-
-        if (mtar_find(&tar, flist.names[i], &tar_header) == MTAR_ESUCCESS) {
-            printf("'%s' already added. Pass!\n", flist.names[i]);
+        if (!new_tar && (mtar_find(&tar, flist.names[i], &tar_header) == MTAR_ESUCCESS)) {
+            printf("Pass! '%s' already added.\n", flist.names[i]);
             continue;
         }
 
         if (os_is_dir(flist.names[i])) {
             tar_err_h = mtar_write_dir_header(&tar, flist.names[i]);
         } else {
-            FILE *fd = fopen(flist.names[i], MTAR_FMODE_R);
+            FILE *fd = fopen(flist.names[i], MTAR_OPEN_R);
             if (!fd) {
                 printf(UNABLE_TO_OPEN_MSG, flist.names[i]);
                 continue;
             }
 
-            size = os_get_fsize(flist.names[i]);
-            tar_err_h = mtar_write_file_header(&tar, flist.names[i], size);
+            size_t size = os_get_fsize(flist.names[i]);
 
+            tar_err_h = mtar_write_file_header(&tar, flist.names[i], size);
             while (!feof(fd)) {
                 void *file_data = malloc(BLOCK_LEN);
                 if (!file_data) {
@@ -233,6 +237,7 @@ int ntar_add_files(const char *tar_fname, bool new_tar, ntar_flist_t flist)
             printf("Added '%s'\n", flist.names[i]);
         }
     }
+    mtar_finalize(&tar);
     mtar_close(&tar);
     return status;
 }

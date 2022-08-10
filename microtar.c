@@ -28,10 +28,10 @@
 
 #include "microtar.h"
 
-const char *MTAR_FMODE_W = "wb";
-const char *MTAR_FMODE_R = "rb";
-const char *MTAR_FMODE_W_PLUS = "w+b";
-const char *MTAR_FMODE_A_PLUS = "a+b";
+const char *MTAR_OPEN_W = "wb";
+const char *MTAR_OPEN_R = "rb";
+const char *MTAR_OPEN_W_PLUS = "w+b";
+const char *MTAR_OPEN_A_PLUS = "a+b";
 
 typedef struct {
     char name[MTAR_FNAME_MAX];

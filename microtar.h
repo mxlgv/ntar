@@ -76,10 +76,10 @@ struct mtar_t {
     size_t last_header;
 };
 
-extern const char *MTAR_FMODE_W;
-extern const char *MTAR_FMODE_R;
-extern const char *MTAR_FMODE_W_PLUS;
-extern const char *MTAR_FMODE_A_PLUS;
+extern const char *MTAR_OPEN_W;
+extern const char *MTAR_OPEN_R;
+extern const char *MTAR_OPEN_W_PLUS;
+extern const char *MTAR_OPEN_A_PLUS;
 
 const char *mtar_strerror(int err);
 
